@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Floating Panel Widget",
+  "version": "1.0",
+  "description": "Floating panel with useful actions and JavaScript bookmarks execution",
+  "permissions": [
+    "bookmarks",
+    "storage",
+    "clipboardWrite",
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "excludeMatches": ["chrome://*/*"],
+      "js": ["content-isolated.js"],
+      "world": "ISOLATED",
+      "runAt": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "excludeMatches": ["chrome://*/*"],
+      "js": ["content-main.js"],
+      "world": "MAIN",
+      "runAt": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "excludeMatches": ["chrome://*/*"],
+      "css": ["panel.css"],
+      "runAt": "document_start"
+    }
+  ]
+}
