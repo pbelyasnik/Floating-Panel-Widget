@@ -1,3 +1,50 @@
+const PANEL_BUTTONS = {
+  DRAG: {
+    tag: 'div',
+    className: 'drag-handle',
+    text: '⋮⋮',
+    title: 'Drag panel'
+  },
+  COLLAPSE: {
+    tag: 'button',
+    className: 'collapse-btn',
+    states: {
+      expanded: { text: '◀', title: 'Collapse panel' },
+      collapsed: { text: '▶', title: 'Expand panel' }
+    }
+  },
+  PRINT: {
+    tag: 'button',
+    className: 'print-btn',
+    text: '🖨️',
+    title: 'Print page'
+  },
+  COPY: {
+    tag: 'button',
+    className: 'copy-btn',
+    states: {
+      default: {
+        html: '<svg width="22" height="22" style="margin: -2px -2px -6px -2px;" viewBox="0 0 24 24" role="presentation"><g fill="currentColor"><path d="M10 19h8V8h-8v11zM8 7.992C8 6.892 8.902 6 10.009 6h7.982C19.101 6 20 6.893 20 7.992v11.016c0 1.1-.902 1.992-2.009 1.992H10.01A2.001 2.001 0 018 19.008V7.992z"></path><path d="M5 16V4.992C5 3.892 5.902 3 7.009 3H15v13H5zm2 0h8V5H7v11z"></path></g></svg>',
+        title: 'Copy URL'
+      },
+      copied: {
+        html: '<span style="color: green; font-weight: bold; padding: 0px 3.5px;">✔</span>',
+        title: 'URL copied to clipboard!'
+      }
+    }
+  },
+  SELECT: {
+    tag: 'select',
+    className: 'js-select'
+  },
+  CALL: {
+    tag: 'button',
+    className: 'call-btn',
+    text: 'Call',
+    title: 'Execute selected JavaScript'
+  }
+};
+
 class FloatingPanel {
   constructor() {
     this.panel = null;
@@ -27,18 +74,55 @@ class FloatingPanel {
     localStorage.setItem('selectedBookmarkIndex', index);
   }
 
+  createElement(config) {
+    const states = config?.states || {};
+    const stateDefault = Object.values(states)[0] || {};
+
+    const className = stateDefault?.className || config?.className;
+    const textContent = stateDefault?.text || config?.text;
+    const htmlContent = stateDefault?.html || config?.html;
+    const title = stateDefault?.title || config?.title;
+
+    const element = document.createElement(config.tag);
+
+    if (className) {
+      element.className = className;
+    }
+    if (textContent) {
+      element.textContent = textContent;
+    }
+    if (htmlContent) {
+      element.innerHTML = htmlContent;
+    }
+    if (title) {
+      element.title = title;
+    }
+
+    return element;
+  }
+
   createPanel() {
     this.panel = document.createElement('div');
     this.panel.className = 'floating-panel';
-    this.panel.innerHTML = `
-      <div class="drag-handle">⋮⋮</div>
-      <button class="collapse-btn" title="Hide/Show buttons">◀</button>
-      <button class="print-btn" title="Print">🖨️</button>
-      <button class="copy-btn" title="Copy URL">📋</button>
-      <select class="js-select"></select>
-      <button class="call-btn">Call</button>
-    `;
-    
+
+    // Create drag handle
+    this.panel.appendChild(this.createElement(PANEL_BUTTONS.DRAG));
+
+    // Create collapse button
+    this.panel.appendChild(this.createElement(PANEL_BUTTONS.COLLAPSE));
+
+    // Create print button
+    this.panel.appendChild(this.createElement(PANEL_BUTTONS.PRINT));
+
+    // Create copy button
+    this.panel.appendChild(this.createElement(PANEL_BUTTONS.COPY));
+
+    // Create select element
+    this.panel.appendChild(this.createElement(PANEL_BUTTONS.SELECT));
+
+    // Create call button
+    this.panel.appendChild(this.createElement(PANEL_BUTTONS.CALL));
+
     document.body.appendChild(this.panel);
   }
 
@@ -67,8 +151,10 @@ class FloatingPanel {
     collapseBtn.addEventListener('click', () => {
       this.panel.classList.toggle('collapsed');
       const isCollapsed = this.panel.classList.contains('collapsed');
-      collapseBtn.textContent = isCollapsed ? '▶' : '◀';
-      
+      const collapseState = isCollapsed ? PANEL_BUTTONS.COLLAPSE.states.collapsed : PANEL_BUTTONS.COLLAPSE.states.expanded;
+      collapseBtn.textContent = collapseState.text;
+      collapseBtn.title = collapseState.title;
+
       // Hide/show elements
       [printBtn, copyBtn, select, callBtn].forEach(el => {
         el.style.display = isCollapsed ? 'none' : '';
@@ -82,6 +168,14 @@ class FloatingPanel {
     copyBtn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(window.location.href);
+
+        // Perform copy button animation
+        copyBtn.innerHTML = PANEL_BUTTONS.COPY.states.copied.html;
+        copyBtn.title = PANEL_BUTTONS.COPY.states.copied.title;
+        setTimeout(() => {
+          copyBtn.innerHTML = PANEL_BUTTONS.COPY.states.default.html;
+          copyBtn.title = PANEL_BUTTONS.COPY.states.default.title;
+        }, 2000);
       } catch (err) {
         console.error('Failed to copy URL:', err);
       }
