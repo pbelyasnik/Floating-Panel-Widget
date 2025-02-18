@@ -7,13 +7,24 @@ class FloatingPanel {
     this.initialX = 0;
     this.initialY = 0;
     this.bookmarks = [];
+    this.selectedBookmarkIndex = 0; // Default selection
     
     this.init();
   }
 
   init() {
+    this.loadSelectedBookmarkIndex();
     this.createPanel();
     this.setupEventListeners();
+  }
+
+  loadSelectedBookmarkIndex() {
+    this.selectedBookmarkIndex = localStorage.getItem('selectedBookmarkIndex') || 0;
+  }
+
+  saveSelectedBookmarkIndex(index) {
+    this.selectedBookmarkIndex = index;
+    localStorage.setItem('selectedBookmarkIndex', index);
   }
 
   createPanel() {
@@ -37,6 +48,7 @@ class FloatingPanel {
     const printBtn = this.panel.querySelector('.print-btn');
     const copyBtn = this.panel.querySelector('.copy-btn');
     const callBtn = this.panel.querySelector('.call-btn');
+    const select = this.panel.querySelector('.js-select');
     
     // Drag functionality
     dragHandle.addEventListener('mousedown', this.startDragging.bind(this));
@@ -46,6 +58,11 @@ class FloatingPanel {
     document.addEventListener('mouseup', this.stopDragging.bind(this));
     document.addEventListener('touchend', this.stopDragging.bind(this));
     
+    // Select change handler
+    select.addEventListener('change', (e) => {
+      this.saveSelectedBookmarkIndex(e.target.selectedIndex);
+    });
+
     // Button actions
     collapseBtn.addEventListener('click', () => {
       this.panel.classList.toggle('collapsed');
@@ -53,7 +70,7 @@ class FloatingPanel {
       collapseBtn.textContent = isCollapsed ? '▶' : '◀';
       
       // Hide/show elements
-      [printBtn, copyBtn, this.panel.querySelector('.js-select'), callBtn].forEach(el => {
+      [printBtn, copyBtn, select, callBtn].forEach(el => {
         el.style.display = isCollapsed ? 'none' : '';
       });
     });
@@ -71,8 +88,7 @@ class FloatingPanel {
     });
     
     callBtn.addEventListener('click', () => {
-      const select = this.panel.querySelector('.js-select');
-      const selectedBookmark = this.bookmarks[select.selectedIndex];
+      const selectedBookmark = this.bookmarks[this.selectedBookmarkIndex];
       if (selectedBookmark) {
         try {
           eval(selectedBookmark.code);
@@ -97,6 +113,9 @@ class FloatingPanel {
       this.bookmarks.map((bookmark, index) => 
         `<option value="${index}">${bookmark.title}</option>`
       ).join('');
+
+    // Set the previously selected index
+    select.selectedIndex = this.selectedBookmarkIndex;
   }
 
   startDragging(e) {
